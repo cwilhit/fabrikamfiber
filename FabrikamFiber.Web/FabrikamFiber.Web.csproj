@@ -19,7 +19,6 @@
     <TargetFrameworkProfile />
     <UseGlobalApplicationHostFile />
     <Use64BitIISExpress />
-    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -165,9 +164,6 @@
     <Content Include="Content\images\maps\map1.png" />
     <Content Include="Content\images\userphoto_kensanchez.jpg" />
     <Content Include="Content\style.css" />
-    <None Include=".dockerignore">
-      <DependentUpon>Dockerfile</DependentUpon>
-    </None>
     <None Include="Deploy\deploy.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -295,7 +291,6 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Web.config" />
     <None Include="CodeTemplates\Scaffolders\MvcScaffolding.Controller\ControllerWithRepository.cs.t4" />
-    <None Include="Dockerfile" />
     <None Include="readme.txt" />
     <Content Include="Views\Customers\Create.cshtml" />
     <Content Include="Views\Customers\Edit.cshtml" />
