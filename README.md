@@ -116,8 +116,6 @@ We will walk through the process for setting up both a Service Fabric and Kubern
 
 In a PowerShell window, run the following:
 
-#! Note - what is the resource group for a lab user?
-
 ```PowerShell
 $acrName = "fabfiberregistry" #set this to what you want
 $subscriptionId = "fb900a94-2376-4f81-9e34-f66d1604f9c0" #set this appropriately
