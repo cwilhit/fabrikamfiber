@@ -257,7 +257,7 @@ $inJson.properties.windowsProfile | add-member -Name "WindowsOffer" -value "Wind
 
 # Copy in your SSH public key from `~/.ssh/id_rsa.pub` to linuxProfile.ssh.publicKeys.keyData
 $inJson.properties.linuxProfile.ssh.publicKeys[0].keyData = [string](Get-Content "~/.ssh/id_rsa.pub")
-1709.0.20180717
+
 # Set servicePrincipalProfile
 $inJson.properties.servicePrincipalProfile.clientId = $sp.appId
 $inJson.properties.servicePrincipalProfile.secret = $sp.password
