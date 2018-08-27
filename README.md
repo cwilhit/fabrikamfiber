@@ -4,9 +4,9 @@ This project was originally started by Richard Hundhausen and distributed on [Co
 
 I have forked this project from Patrick Lang, who should be given credit for containerizing the project.
 
-## Step by Step - Getting Started & Azure Service Fabric
+## Step by Step - Getting Started
 
-We will walk through how to take the fabrikam solution, shift & run the containers locally, and then orchestrate them in Azure through Kubernetes.
+We will walk through how to take the fabrikam solution, shift & run the containers locally, and then orchestrate them in Azure through Kubernetes and Service Fabric.
 
 ## Get the Project
 
