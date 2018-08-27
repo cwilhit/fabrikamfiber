@@ -506,3 +506,164 @@ kubernetes   ClusterIP      10.0.0.1     <none>        443/TCP        46m
 Once the pod is in Running state, get the IP from kubectl get service then visit http://<EXTERNAL-IP> to test your web server.
 
 Congratulations on deploying a kubernetes cluster via acs-engine in Azure.
+
+# Service Fabric
+Azure offers Service Fabric, a distributed systems platform which is capable of orchestrating containers.
+
+## Get the Service Fabric branch
+
+Grab the project if you have not already and checkout the `service_fabric` branch:
+
+```PowerShell
+git clone https://github.com/cwilhit/fabrikamfiber.git
+git checkout service_fabric
+```
+
+## Set up an Azure Container Registry
+
+We set up a container registry earlier in the tutorial. We will be reusing that same container registry. If you have not already set up a container registry, refer to earlier in the tutorial for how to do this.
+
+We do need to change the Service Fabric deployment manifest to the container image that was pushed to your container registry earlier in the tutorial. Open `fabrikamfiber/FabrikamFiber.CallCenterApplication/ApplicationPackageRoot/FabrikamFiber.WebPkg/ServiceManifest.xml`
+
+Look for the line below and change it to your container registry and image:
+
+```Xml
+<ServiceManifest>
+  ...
+  <CodePackage>
+    <EntryPoint>
+        <ImageName>yourcontainerregistry/yourcontainerimage</ImageName>
+    </EntryPoint>
+  </CodePackage>
+  ...
+</ServiceManifest>
+```
+
+Next, open `fabrikamfiber/FabrikamFiber.CallCenterApplication/ApplicationPackageRoot/ApplicationManifest.xml` and change the registry credentials to the credentials for *your* registry:
+
+```Xml
+<ServiceManifestImport>
+  ...
+  <Policies>
+    <ContainerHostPolicies CodePackageRef="FabrikamFiber.WebPkg" ServiceManifesetVersion="1.0.0">
+        <RepositoryCredentials AccountName="yourregistryname" Password="yourregistrypassword" PasswordEncrypted="true"/>
+    </EntryPoint>
+  </Policies>
+  ...
+</ServiceManifestImport>
+```
+
+## Configure the Service Fabric Cluster
+
+We need to create a definition that tells Service Fabric what SKU VMs we want, where we want them located, etc.
+
+```PowerShell
+# Be sure to change these next 3 lines for your deployment. Make note that WindowsPassword Windows admin user name cannot be more than 20 characters long, end with a period(.), or contain the following characters: \\ / \" [ ] : | < > + = ; , ? * @.
+$windowsUser = "fiberuser"
+$windowsPassword = "P4ssw0rd!"
+
+# Download template
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Microsoft/service-fabric-scripts-and-templates/master/templates/cluster-tutorial/vnet-cluster.json -OutFile vnet-cluster.json
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Microsoft/service-fabric-scripts-and-templates/master/templates/cluster-tutorial/vnet-cluster.parameters.json -OutFile vnet-cluster.parameters.json
+
+# Load template
+$inJson = Get-Content .\vnet-cluster.parameters.json | ConvertFrom-Json
+
+# Set the location
+$inJson.parameters.location.value = "westus2"
+
+# Set Windows username & password
+$inJson.parameters.adminUserName.value = $windowsUser
+$inJson.parameters.adminPassword.value = $windowsPassword
+
+#Set the SKU params
+$inJson.parameters.vmImageSku.value = "Datacenter-Core-1709-with-Containers-smalldisk"
+$inJson.parameters.vmImageVersion.value = "1709.0.20180717"
+$inJson.parameters.vmImageOffer.value = "WindowsServerSemiAnnual"
+$inJson.parameters.vmImagePublisher.value = "MicrosoftWindowsServer"
+
+# Save file
+$inJson | ConvertTo-Json | Out-File -Encoding ascii -FilePath "vnet-cluster-complete.parameters.json"
+```
+
+## Create the cluster
+
+Now we will ask Azure to provision a Service Fabric cluster & associated resources, based upon the configuration files we created above.
+ 
+```PowerShell
+$certpwd="q6D7nN%6ck@6" | ConvertTo-SecureString -AsPlainText -Force
+$certfolder="c:\mycertificates\"
+$clustername = "mysfcluster123"
+$vaultname = "fabrikamfibervault"
+$vaultgroupname="clusterkeyvaultgroup123"
+$subname="$clustername.westus2.cloudapp.azure.com"
+$endpoint="$clustername.westus2.cloudapp.azure.com:19000"
+$templateFile = (Get-Item .\vnet-cluster.json).FullName
+$parameterFile = (Get-Item .\vnet-cluster-complete.parameters.json).FullName
+
+mkdir $certfolder
+New-AzureRmServiceFabricCluster -ResourceGroupName $rgName -TemplateFile $templateFile -ParameterFile $parameterFile -CertificatePassword $certpwd -CertificateOutputFolder $certfolder -KeyVaultName $vaultname -KeyVaultResouceGroupName $vaultgroupname -CertificateSubjectName $subname
+
+```
+
+After several minutes, it will return information about the cluster it has just created. Make note of `CertificateSavedLocalPath`
+
+Connect to the cluster using the Service Fabric PowerShell module installed with the Service Fabric SDK. First, install the certificate into the Personal (My) store of the current user on your computer. Run the following PowerShell command:
+
+```PowerShell
+$certpwd="q6D7nN%6ck@6" | ConvertTo-SecureString -AsPlainText -Force
+#Make sure to change the filepath to what is returned in CertificateSavedLocalPath
+Import-PfxCertificate -Exportable -CertStoreLocation Cert:\CurrentUser\TrustedPeople -FilePath C:\mycertificates\crwilhit-sf20180824201615.pfx -Password $certpwd
+```
+
+You are now ready to connect to your secure cluster.
+
+Use the Connect-ServiceFabricCluster cmdlet to connect to the secure cluster. **The certificate thumbprint and connection endpoint details are found in the output from the previous step.**
+
+```PowerShell
+Connect-ServiceFabricCluster -ConnectionEndpoint $endpoint -KeepAliveIntervalInSec 10 -X509Credential -ServerCertThumbprint 08BFBF7DBBBCBC9A18CE6C445044D5E9E98D41E7 -FindType FindByThumbprint -FindValue 08BFBF7DBBBCBC9A18CE6C445044D5E9E98D41E7 -StoreLocation CurrentUser -StoreName My
+
+#Check to make sure you are connected by verifying the health of the cluster.
+Get-ServiceFabricClusterHealth
+```
+
+You should see output similar to below:
+
+```PowerShell
+AggregatedHealthState   : Ok
+NodeHealthStates        : None
+ApplicationHealthStates : None
+HealthEvents            : None
+HealthStatistics        :
+                          Node                  : 0 Ok, 0 Warning, 0 Error
+                          Application           : 0 Ok, 0 Warning, 0 Error
+                          Service               : 0 Ok, 0 Warning, 0 Error
+                          Partition             : 0 Ok, 0 Warning, 0 Error
+                          Replica               : 0 Ok, 0 Warning, 0 Error
+                          DeployedApplication   : 0 Ok, 0 Warning, 0 Error
+                          DeployedServicePackage : 0 Ok, 0 Warning, 0 Error
+```
+
+## Deploy the Application
+
+You need to build a release version of the project. Change directories to your project's `FabrikamFiber/FabrikamFiber.CallCenterApplication/Scripts` folder. Use the deploy script to deploy to the cluster. *Note: make sure to run this after running the above Connect-ServiceFabricCluster command--it will reuse the connection*.
+
+```PowerShell
+.\Deploy-FabricApplication.ps1 -UseExistingClusterConnection -PublishProfileFile "..\PublishProfiles\Cloud.xml" -ApplicationPackagePath "../pkg/Release"
+```
+
+Now, you can check the status of the cluster by running `Get-ServiceFabricClusterhealth`. It will take several mintues for the cluster to reach a healthy state. Service Fabric will report an error while the container images are pulled and then eventually run.
+
+
+The service will eventually show an EXTERNAL-IP as well:
+
+```PowerShell
+kubectl get service
+NAME         TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE
+iis          LoadBalancer   10.0.9.47    13.66.203.178 80:31240/TCP   1m
+kubernetes   ClusterIP      10.0.0.1     <none>        443/TCP        46m
+```
+
+Once the pod is in Running state, visit http://"$clustername.westus2.cloudapp.azure.com" to be greeted by the fabrikam fiber application.
+
+Congratulations on deploying a Service Fabric cluster into Azure.
