@@ -654,16 +654,6 @@ You need to build a release version of the project. Change directories to your p
 
 Now, you can check the status of the cluster by running `Get-ServiceFabricClusterhealth`. It will take several mintues for the cluster to reach a healthy state. Service Fabric will report an error while the container images are pulled and then eventually run.
 
-
-The service will eventually show an EXTERNAL-IP as well:
-
-```PowerShell
-kubectl get service
-NAME         TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)        AGE
-iis          LoadBalancer   10.0.9.47    13.66.203.178 80:31240/TCP   1m
-kubernetes   ClusterIP      10.0.0.1     <none>        443/TCP        46m
-```
-
 Once the pod is in Running state, visit http://"$clustername.westus2.cloudapp.azure.com" to be greeted by the fabrikam fiber application.
 
 Congratulations on deploying a Service Fabric cluster into Azure.
