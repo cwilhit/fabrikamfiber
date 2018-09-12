@@ -19,7 +19,6 @@
       <ContainerHostPolicies CodePackageRef="Database.Code">
         <!-- See https://aka.ms/I7z0p9 for how to encrypt your repository password -->
         <!-- See https://aka.ms/I7z0p9 for how to encrypt your repository password -->
-        <RepositoryCredentials AccountName="fill this in!" Password="fill this in!" PasswordEncrypted="true" />
         <PortBinding ContainerPort="1433" EndpointRef="DatabaseTypeEndpoint" />
         <NetworkConfig NetworkType="Other" />
       </ContainerHostPolicies>
@@ -35,7 +34,7 @@
     </EnvironmentOverrides>
     <Policies>
       <ContainerHostPolicies CodePackageRef="FabrikamFiber.Web.Code">
-        <RepositoryCredentials AccountName="fabfiberregistry" Password="iS1ReUx2yMYPxSd=SiJ1YGH0N+RztDkI" PasswordEncrypted="true" />
+        <RepositoryCredentials AccountName="<fill this in>" Password="<fill this in>" PasswordEncrypted="false" />
         <PortBinding ContainerPort="80" EndpointRef="FabrikamFiber.WebTypeEndpoint" />
         <NetworkConfig NetworkType="Other" />
       </ContainerHostPolicies>
